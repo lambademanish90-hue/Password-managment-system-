@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureVault | Password Manager</title>
+<style>
+:root{--bg:#0b1020;--panel:#121a2e;--panel2:#18223b;--text:#eef4ff;--muted:#94a3b8;--accent:#6d7cff;--accent2:#22d3ee;--danger:#fb7185;--success:#34d399;--border:#263452}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(135deg,#080c18,#10182b);color:var(--text);min-height:100vh}
+button,input{font:inherit}button{cursor:pointer}.app{display:flex;min-height:100vh}
+.sidebar{width:245px;background:#0a0f1d;border-right:1px solid var(--border);padding:24px 16px;position:fixed;height:100vh}
+.logo{font-size:22px;font-weight:800;padding:8px 10px 30px}.logo span{color:var(--accent2)}
+.nav button{width:100%;border:0;background:transparent;color:var(--muted);padding:13px 14px;text-align:left;border-radius:10px;margin:3px 0}.nav button.active,.nav button:hover{background:var(--panel2);color:#fff}
+.main{margin-left:245px;width:calc(100% - 245px);padding:28px 34px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}.top h1{margin:0 0 5px;font-size:28px}.top p{margin:0;color:var(--muted)}
+.avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent2));font-weight:800}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.card{background:rgba(18,26,46,.92);border:1px solid var(--border);border-radius:16px;padding:20px}.label{color:var(--muted);font-size:13px}.value{font-size:30px;font-weight:800;margin-top:8px}.sub{font-size:12px;color:var(--muted);margin-top:5px}
+.toolbar{display:flex;gap:10px;margin:24px 0 16px}.search{flex:1;background:var(--panel);border:1px solid var(--border);color:#fff;padding:13px 15px;border-radius:10px;outline:none}.search:focus{border-color:var(--accent)}
+.btn{border:0;border-radius:10px;padding:12px 16px;font-weight:700}.primary{background:var(--accent);color:#fff}.secondary{background:var(--panel2);color:#fff;border:1px solid var(--border)}
+.table{background:rgba(18,26,46,.92);border:1px solid var(--border);border-radius:16px;overflow:hidden}.thead,.row{display:grid;grid-template-columns:2fr 2fr 1.2fr 1.3fr 120px;gap:14px;align-items:center;padding:16px 18px}.thead{color:var(--muted);font-size:12px;text-transform:uppercase;background:#10182b}.row{border-top:1px solid var(--border)}.site{font-weight:750}.user{color:var(--muted);font-size:12px;margin-top:4px}.dots{letter-spacing:3px}.tag{font-size:12px;padding:6px 9px;border-radius:999px;display:inline-block}.strong{background:rgba(52,211,153,.12);color:var(--success)}.medium{background:rgba(250,204,21,.12);color:#facc15}.weak{background:rgba(251,113,133,.12);color:var(--danger)}.actions{display:flex;gap:5px}.icon{border:1px solid var(--border);background:var(--panel2);color:#fff;border-radius:7px;padding:7px 8px}.icon.danger{color:#fda4af}.empty{text-align:center;padding:50px;color:var(--muted)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;place-items:center;padding:20px;z-index:5}.modal.show{display:grid}.box{width:min(520px,100%);background:#10182b;border:1px solid var(--border);border-radius:18px;padding:24px}.box h2{margin-top:0}.field{margin:14px 0}.field label{display:block;color:var(--muted);font-size:13px;margin-bottom:7px}.field input{width:100%;background:#0b1222;color:#fff;border:1px solid var(--border);padding:12px;border-radius:9px;outline:none}.passline{display:flex;gap:7px}.passline input{flex:1}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.strength{font-size:12px;margin-top:7px}.settings{display:none}.settings.show{display:block}.generator{display:grid;grid-template-columns:1fr 1fr;gap:16px}.range{width:100%}
+.toast{position:fixed;right:22px;bottom:22px;background:#17223a;border:1px solid var(--border);padding:13px 16px;border-radius:10px;display:none;z-index:10}
+
+.auth-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at top right,rgba(109,124,255,.18),transparent 35%),linear-gradient(135deg,#080c18,#10182b)}
+.auth-card{width:min(440px,100%);background:rgba(18,26,46,.96);border:1px solid var(--border);border-radius:22px;padding:30px;box-shadow:0 24px 80px rgba(0,0,0,.35)}
+.auth-brand{text-align:center;font-size:27px;font-weight:850;margin-bottom:8px}.auth-brand span{color:var(--accent2)}
+.auth-subtitle{text-align:center;color:var(--muted);margin:0 0 24px;font-size:14px}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:5px;background:#0b1222;border-radius:12px;margin-bottom:20px}
+.auth-tabs button{border:0;border-radius:9px;padding:11px;background:transparent;color:var(--muted);font-weight:700}
+.auth-tabs button.active{background:var(--panel2);color:white}
+.auth-form .field input{width:100%;background:#0b1222;color:#fff;border:1px solid var(--border);padding:13px;border-radius:9px;outline:none}
+.auth-form .field input:focus{border-color:var(--accent)}.auth-submit{width:100%;margin-top:10px;padding:13px}
+.auth-message{display:none;margin-top:14px;padding:11px 12px;border-radius:9px;font-size:13px;line-height:1.45;background:rgba(251,113,133,.1);color:#fda4af;border:1px solid rgba(251,113,133,.25)}
+.auth-message.ok{background:rgba(52,211,153,.1);color:#6ee7b7;border-color:rgba(52,211,153,.25)}
+.auth-note{font-size:11px;color:var(--muted);line-height:1.5;margin:18px 0 0;text-align:center}
+.logout-btn{margin-top:18px;width:100%;border:1px solid var(--border);background:transparent;color:#fda4af;padding:11px 14px;border-radius:10px;text-align:left}
+@media(max-width:650px){.auth-card{padding:24px 20px}.auth-screen{padding:16px}}
+
+@media(max-width:950px){.cards{grid-template-columns:repeat(2,1fr)}.sidebar{width:200px}.main{margin-left:200px;width:calc(100% - 200px)}.thead,.row{grid-template-columns:2fr 1.5fr 1fr 100px}.thead div:nth-child(2),.row .account{display:none}}
+@media(max-width:650px){.sidebar{position:static;width:100%;height:auto;border-right:0;border-bottom:1px solid var(--border)}.app{display:block}.main{margin:0;width:100%;padding:20px}.nav{display:flex;gap:5px;overflow:auto}.nav button{white-space:nowrap}.cards{grid-template-columns:1fr 1fr}.thead{display:none}.row{grid-template-columns:1fr auto;padding:15px}.row .account{display:block}.row>div:nth-child(3){display:none}.generator{grid-template-columns:1fr}.top h1{font-size:22px}}
+</style>
+</head>
+<body>
+<section class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-brand">🔐 Secure<span>Vault</span></div>
+    <p class="auth-subtitle">Your personal password management dashboard</p>
+    <div class="auth-tabs">
+      <button id="loginTab" class="active" type="button" onclick="showAuthForm('login')">Login</button>
+      <button id="signupTab" type="button" onclick="showAuthForm('signup')">Sign Up</button>
+    </div>
+    <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
+      <div class="field"><label for="loginEmail">EMAIL ADDRESS</label><input id="loginEmail" type="email" autocomplete="username" placeholder="you@example.com" required></div>
+      <div class="field"><label for="loginPassword">PASSWORD</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter your password" required minlength="8"></div>
+      <button class="btn primary auth-submit" type="submit">Login to Secure Vault</button>
+    </form>
+    <form class="auth-form" id="signupForm" style="display:none" onsubmit="handleSignup(event)">
+      <div class="field"><label for="signupName">FULL NAME</label><input id="signupName" type="text" autocomplete="name" placeholder="Your name" required maxlength="80"></div>
+      <div class="field"><label for="signupEmail">EMAIL ADDRESS</label><input id="signupEmail" type="email" autocomplete="email" placeholder="you@example.com" required></div>
+      <div class="field"><label for="signupPassword">CREATE PASSWORD</label><input id="signupPassword" type="password" autocomplete="new-password" placeholder="At least 8 characters" required minlength="8"></div>
+      <div class="field"><label for="signupConfirm">CONFIRM PASSWORD</label><input id="signupConfirm" type="password" autocomplete="new-password" placeholder="Re-enter your password" required minlength="8"></div>
+      <button class="btn primary auth-submit" type="submit">Create Account</button>
+    </form>
+    <div id="authMessage" class="auth-message" role="status" aria-live="polite"></div>
+    <p class="auth-note">Academic demo: account details and vault records are stored in this browser. Do not use real or sensitive passwords. This standalone HTML version is not a production-secure password manager.</p>
+  </div>
+</section>
+<div class="app" id="mainApp" style="display:none">
+<aside class="sidebar">
+  <div class="logo">🔐 Secure<span>Vault</span></div>
+  <div class="nav">
+    <button class="active" onclick="showPage('dashboard',this)">▦ Dashboard</button>
+    <button onclick="showPage('passwords',this)">🔑 Passwords</button>
+    <button onclick="showPage('generator',this)">⚡ Generator</button>
+    <button onclick="showPage('settings',this)">⚙ Settings</button>
+  </div>
+  <button class="logout-btn" onclick="logout()">↪ Log Out</button>
+</aside>
+
+<main class="main">
+<section id="dashboard">
+  <div class="top"><div><h1>Password Dashboard</h1><p>Manage your digital credentials in one place.</p></div><div class="avatar">SV</div></div>
+  <div class="cards">
+    <div class="card"><div class="label">TOTAL PASSWORDS</div><div class="value" id="total">0</div><div class="sub">Saved credentials</div></div>
+    <div class="card"><div class="label">STRONG</div><div class="value" id="strong">0</div><div class="sub">Good security</div></div>
+    <div class="card"><div class="label">WEAK</div><div class="value" id="weak">0</div><div class="sub">Needs attention</div></div>
+    <div class="card"><div class="label">SECURITY SCORE</div><div class="value" id="score">0%</div><div class="sub">Overall strength</div></div>
+  </div>
+  <div class="toolbar"><input class="search" id="search" placeholder="🔎 Search website or username..." oninput="render()"><button class="btn primary" onclick="openModal()">＋ Add Password</button></div>
+  <div class="table"><div class="thead"><div>Website</div><div>Username</div><div>Password</div><div>Strength</div><div>Actions</div></div><div id="rows"></div></div>
+<p style="color:var(--muted);font-size:12px;margin:10px 3px">Tip: tap 👁 on any saved account to reveal its password.</p>
+</section>
+
+<section id="passwords" style="display:none">
+  <div class="top"><div><h1>Password Vault</h1><p>View and manage all saved accounts.</p></div></div>
+  <div class="toolbar"><input class="search" placeholder="🔎 Search..." oninput="document.getElementById('search').value=this.value;render()"><button class="btn primary" onclick="openModal()">＋ Add Password</button></div>
+  <div class="table"><div class="thead"><div>Website</div><div>Username</div><div>Password</div><div>Strength</div><div>Actions</div></div><div id="rows2"></div></div>
+</section>
+
+<section id="generator" style="display:none">
+ <div class="top"><div><h1>Password Generator</h1><p>Create a strong password for your accounts.</p></div></div>
+ <div class="card generator">
+   <div><div class="label">PASSWORD LENGTH: <b id="lenText">16</b></div><input class="range" id="len" type="range" min="8" max="32" value="16" oninput="lenText.textContent=this.value;makeGen()"></div>
+   <div><div class="label">GENERATED PASSWORD</div><input class="search" id="generated" readonly><div class="strength">👁 Generated password is visible here so you can copy/use it.</div></div>
+   <div><label><input id="upper" type="checkbox" checked onchange="makeGen()"> Uppercase</label><br><label><input id="numbers" type="checkbox" checked onchange="makeGen()"> Numbers</label><br><label><input id="symbols" type="checkbox" checked onchange="makeGen()"> Symbols</label></div>
+   <div><button class="btn primary" onclick="makeGen();copyGenerated()">Generate & Copy</button></div>
+ </div>
+</section>
+
+<section id="settings" class="settings">
+ <div class="top"><div><h1>Settings</h1><p>Demo settings for your mini project.</p></div></div>
+ <div class="card"><h3>Local Storage</h3><p style="color:var(--muted)">Passwords are stored in this browser for demonstration purposes.</p><button class="btn secondary" onclick="clearAll()">Clear All Saved Passwords</button></div>
+</section>
+</main>
+</div>
+
+<div class="modal" id="modal">
+ <div class="box">
+  <h2 id="modalTitle">Add Password</h2>
+  <div class="field"><label>WEBSITE / APP</label><input id="site" placeholder="e.g. Google"></div>
+  <div class="field"><label>USERNAME / EMAIL</label><input id="username" placeholder="e.g. user@gmail.com"></div>
+  <div class="field"><label>PASSWORD</label>
+<div class="passline">
+<input id="password" type="password" oninput="strengthText()">
+<button class="btn secondary" onclick="toggleModalPassword()" id="modalEye">👁</button>
+<button class="btn secondary" onclick="makeModalPassword()">Generate</button>
+</div>
+<div class="strength" id="strength"></div></div>
+  <div class="modal-actions"><button class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="save()">Save Password</button></div>
+ </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let data=[], edit=-1, currentUser=null;
+const $=id=>document.getElementById(id);
+const USERS_KEY='secureVaultUsers';
+function getUsers(){try{return JSON.parse(localStorage.getItem(USERS_KEY)||'[]')}catch{return []}}
+function setUsers(users){localStorage.setItem(USERS_KEY,JSON.stringify(users))}
+function vaultKey(){return 'secureVaultData_'+currentUser.id}
+function saveStore(){if(currentUser)localStorage.setItem(vaultKey(),JSON.stringify(data))}
+function showAuthForm(mode){
+  $('loginForm').style.display=mode==='login'?'block':'none';
+  $('signupForm').style.display=mode==='signup'?'block':'none';
+  $('loginTab').classList.toggle('active',mode==='login');
+  $('signupTab').classList.toggle('active',mode==='signup');
+  showAuthMessage('');
+}
+function showAuthMessage(message,ok=false){const e=$('authMessage');e.textContent=message;e.style.display=message?'block':'none';e.classList.toggle('ok',ok)}
+async function hashPassword(password,salt){
+  if(!window.crypto?.subtle)throw new Error('Secure password hashing is unavailable in this browser context. Open this file in a modern browser through localhost.');
+  const enc=new TextEncoder();
+  const key=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(salt),iterations:150000,hash:'SHA-256'},key,256);
+  return Array.from(new Uint8Array(bits),b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function handleSignup(event){
+  event.preventDefault();
+  const name=$('signupName').value.trim(),email=$('signupEmail').value.trim().toLowerCase(),password=$('signupPassword').value,confirmPassword=$('signupConfirm').value;
+  if(!name||!email||!password){showAuthMessage('Please complete all required fields.');return}
+  if(password.length<8){showAuthMessage('Password must contain at least 8 characters.');return}
+  if(password!==confirmPassword){showAuthMessage('Passwords do not match.');return}
+  const users=getUsers();if(users.some(u=>u.email===email)){showAuthMessage('An account with this email already exists. Please log in.');return}
+  try{
+    const id=(window.crypto?.randomUUID?.()||('user_'+Date.now()+'_'+Math.random().toString(36).slice(2)));
+    const salt=window.crypto?.getRandomValues?Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join(''):id;
+    const passwordHash=await hashPassword(password,salt);
+    users.push({id,name,email,salt,passwordHash,createdAt:new Date().toISOString()});setUsers(users);
+    $('signupForm').reset();showAuthForm('login');$('loginEmail').value=email;showAuthMessage('Account created. Please log in.',true);
+  }catch(err){showAuthMessage(err.message||'Could not create account. Please try again.')}
+}
+async function handleLogin(event){
+  event.preventDefault();const email=$('loginEmail').value.trim().toLowerCase(),password=$('loginPassword').value;
+  const user=getUsers().find(u=>u.email===email);if(!user){showAuthMessage('Invalid email or password.');return}
+  try{const hash=await hashPassword(password,user.salt);if(hash!==user.passwordHash){showAuthMessage('Invalid email or password.');return}currentUser={id:user.id,name:user.name,email:user.email};
+    try{data=JSON.parse(localStorage.getItem(vaultKey())||'[]')}catch{data=[]}
+    $('authScreen').style.display='none';$('mainApp').style.display='flex';$('loginForm').reset();$('signupForm').reset();
+    const avatar=document.querySelector('.avatar');if(avatar)avatar.textContent=(user.name||'SV').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+    render();makeGen();showAuthMessage('');
+  }catch(err){showAuthMessage(err.message||'Login failed. Please try again.')}
+}
+function logout(){currentUser=null;data=[];edit=-1;$('mainApp').style.display='none';$('authScreen').style.display='grid';$('loginPassword').value='';showAuthForm('login');showAuthMessage('You have been logged out.',true)}
+function strength(p){let s=0;if(p.length>=8)s++;if(/[A-Z]/.test(p))s++;if(/[a-z]/.test(p))s++;if(/[0-9]/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;return s}
+function label(p){let s=strength(p);return s>=4?'<span class="tag strong">Strong</span>':s===3?'<span class="tag medium">Medium</span>':'<span class="tag weak">Weak</span>'}
+function esc(x){return String(x).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function render(){
+ let q=($('search')?.value||'').toLowerCase();
+ let filtered=data.filter(x=>(x.site+' '+x.username).toLowerCase().includes(q));
+ let html=filtered.map(x=>{let i=data.indexOf(x);return `<div class="row"><div><div class="site">🌐 ${esc(x.site)}</div><div class="user">${esc(x.username)}</div></div><div class="account">${esc(x.username)}</div><div class="dots" id="pw${i}">••••••••</div><div>${label(x.password)}</div><div class="actions"><button class="icon" onclick="toggle(${i})">👁</button><button class="icon" onclick="openModal(${i})">✏️</button><button class="icon danger" onclick="del(${i})">🗑</button></div></div>`}).join('');
+ $('rows').innerHTML=html||'<div class="empty">🔐 No saved passwords yet.<br><br>Add your first password to get started.</div>';
+ if($('rows2'))$('rows2').innerHTML=html||'<div class="empty">No saved passwords.</div>';
+ let strong=data.filter(x=>strength(x.password)>=4).length, weak=data.filter(x=>strength(x.password)<=2).length;
+ $('total').textContent=data.length;$('strong').textContent=strong;$('weak').textContent=weak;$('score').textContent=(data.length?Math.round(strong/data.length*100):0)+'%';
+}
+function openModal(i=-1){edit=i;$('modal').classList.add('show');$('password').type='password';$('modalEye').textContent='👁';$('modalTitle').textContent=i<0?'Add Password':'Edit Password';$('site').value=i<0?'':data[i].site;$('username').value=i<0?'':data[i].username;$('password').value=i<0?'':data[i].password;strengthText()}
+function closeModal(){$('modal').classList.remove('show')}
+function save(){let site=$('site').value.trim(),username=$('username').value.trim(),password=$('password').value;if(!site||!username||!password){toast('Please fill all fields');return}let item={site,username,password};if(edit<0)data.push(item);else data[edit]=item;saveStore();closeModal();render();toast('Password saved successfully')}
+function del(i){if(confirm('Delete this saved password?')){data.splice(i,1);saveStore();render();toast('Password deleted')}}
+function toggle(i){
+  let e=$('pw'+i);
+  if(e.dataset.show==='1'){
+    e.textContent='••••••••';
+    e.dataset.show='0';
+  }else{
+    e.textContent=data[i].password;
+    e.dataset.show='1';
+  }
+}
+function toggleModalPassword(){
+  const e=$('password');
+  const b=$('modalEye');
+  if(e.type==='password'){
+    e.type='text';
+    b.textContent='🙈';
+  }else{
+    e.type='password';
+    b.textContent='👁';
+  }
+}
+function strengthText(){let p=$('password').value,s=strength(p);$('strength').innerHTML=!p?'':s>=4?'🟢 Strong password':s===3?'🟡 Medium password':'🔴 Weak password'}
+function randomPass(len=16){let c='abcdefghijklmnopqrstuvwxyz',o=c.toUpperCase(),n='0123456789',s='!@#$%^&*()_+-=';let chars=c+o+n+s,r='';if(crypto?.getRandomValues){let b=crypto.getRandomValues(new Uint32Array(len));for(let i=0;i<len;i++)r+=chars[b[i]%chars.length]}else{for(let i=0;i<len;i++)r+=chars[Math.floor(Math.random()*chars.length)]}return r}
+function makeModalPassword(){$('password').value=randomPass();strengthText()}
+function makeGen(){let len=+$('len').value,c='abcdefghijklmnopqrstuvwxyz',chars=c+($('upper').checked?c.toUpperCase():'')+($('numbers').checked?'0123456789':'')+($('symbols').checked?'!@#$%^&*()_+-=':'');if(!chars)return $('generated').value='';let r='';if(crypto?.getRandomValues){let b=crypto.getRandomValues(new Uint32Array(len));for(let i=0;i<len;i++)r+=chars[b[i]%chars.length]}else{for(let i=0;i<len;i++)r+=chars[Math.floor(Math.random()*chars.length)]}$('generated').value=r}
+function copyGenerated(){navigator.clipboard?.writeText($('generated').value);toast('Generated password copied')}
+function showPage(id,btn){['dashboard','passwords','generator','settings'].forEach(x=>$(x).style.display=x===id?'block':'none');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(id==='generator')makeGen()}
+function clearAll(){if(confirm('Delete every saved password?')){data=[];saveStore();render();toast('Vault cleared')}}
+function toast(t){let e=$('toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2200)}
+// Require sign-up/login before showing the password manager.
+showAuthForm('login');
+</script>
+</body>
+</html>
